@@ -41,4 +41,14 @@ jobs:
 
       - name: Record resolved dependencies
         if: always()
-        run: bun pm ls --all
+        run: |
+          bun - <<'JS'
+          const { readFileSync } = require("node:fs");
+          const paths = [...new Bun.Glob("**/package.json").scanSync({
+            cwd: "node_modules", onlyFiles: true, followSymlinks: true, dot: true,
+          })].sort();
+          for (const path of paths) {
+            const { name, version } = JSON.parse(readFileSync(`node_modules/${path}`, "utf8"));
+            if (name && version) console.log(JSON.stringify({ path, name, version }));
+          }
+          JS
